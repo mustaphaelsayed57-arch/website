@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>برنامج حصر المرضى وإدارة الملفات الطبية</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Tahoma, Arial, sans-serif;
+}
+
+body{
+    background:#f3f6f9;
+    color:#222;
+}
+
+header{
+    background:#1769aa;
+    color:white;
+    padding:22px;
+    text-align:center;
+    box-shadow:0 2px 8px #0002;
+}
+
+header h1{
+    margin-bottom:6px;
+}
+
+.container{
+    width:95%;
+    max-width:1400px;
+    margin:25px auto;
+}
+
+.card{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 10px #0001;
+}
+
+.card h2{
+    margin-bottom:20px;
+    color:#1769aa;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+}
+
+.field{
+    display:flex;
+    flex-direction:column;
+}
+
+.field label{
+    margin-bottom:7px;
+    font-weight:bold;
+}
+
+.field input,
+.field select,
+.field textarea{
+    border:1px solid #ccd3da;
+    border-radius:7px;
+    padding:11px;
+    font-size:15px;
+    outline:none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+    border-color:#1769aa;
+}
+
+textarea{
+    resize:vertical;
+    min-height:80px;
+}
+
+.full{
+    grid-column:1/-1;
+}
+
+.buttons{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+    flex-wrap:wrap;
+}
+
+button{
+    border:0;
+    border-radius:7px;
+    padding:11px 18px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:bold;
+}
+
+.btn-add{
+    background:#198754;
+    color:white;
+}
+
+.btn-clear{
+    background:#6c757d;
+    color:white;
+}
+
+.btn-export{
+    background:#1769aa;
+    color:white;
+}
+
+.btn-edit{
+    background:#ffc107;
+    color:#222;
+}
+
+.btn-delete{
+    background:#dc3545;
+    color:white;
+}
+
+.search{
+    width:100%;
+    padding:13px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    font-size:16px;
+    margin-bottom:15px;
+}
+
+.table-container{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:1100px;
+}
+
+th{
+    background:#1769aa;
+    color:white;
+    padding:12px;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #ddd;
+    text-align:center;
+}
+
+tr:hover{
+    background:#f5f9fc;
+}
+
+.file-box{
+    border:2px dashed #aaa;
+    border-radius:8px;
+    padding:20px;
+    text-align:center;
+    cursor:pointer;
+    background:#fafafa;
+}
+
+.file-box:hover{
+    border-color:#1769aa;
+}
+
+#fileInput{
+    display:none;
+}
+
+.file-list{
+    margin-top:10px;
+}
+
+.file-item{
+    background:#eef3f7;
+    padding:8px;
+    margin:5px 0;
+    border-radius:5px;
+    display:flex;
+    justify-style:space-between;
+    align-items:center;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.stat{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    text-align:center;
+    box-shadow:0 2px 8px #0001;
+}
+
+.stat strong{
+    display:block;
+    font-size:30px;
+    color:#1769aa;
+    margin-top:8px;
+}
+
+.empty{
+    padding:30px;
+    text-align:center;
+    color:#777;
+}
+
+.file-link {
+    display: inline-block;
+    background: #eef3f7;
+    color: #1769aa;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    border: 1px solid #ccd3da;
+}
+
+.file-link:hover {
+    background: #1769aa;
+    color: white;
+}
+
+@media(max-width:900px){
+    .form-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:600px){
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .stats{
+        grid-template-columns:1fr;
+    }
+
+    .container{
+        width:97%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🏥 برنامج حصر المرضى والملفات الطبية</h1>
+    <p>إدارة بيانات المرضى وتوفير معاينة الملفات والأشعة للطبيب</p>
+</header>
+
+<div class="container">
+
+    <!-- الإحصائيات -->
+    <div class="stats">
+        <div class="stat">
+            إجمالي المرضى
+            <strong id="totalPatients">0</strong>
+        </div>
+
+        <div class="stat">
+            مرضى اليوم
+            <strong id="todayPatients">0</strong>
+        </div>
+
+        <div class="stat">
+            إجمالي الملفات المرفقة
+            <strong id="totalFiles">0</strong>
+        </div>
+    </div>
+
+    <!-- إضافة / تعديل مريض -->
+    <div class="card">
+
+        <h2 id="formTitle">➕ إضافة مريض جديد</h2>
+
+        <form id="patientForm">
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>اسم المريض</label>
+                    <input id="name" type="text" required>
+                </div>
+
+                <div class="field">
+                    <label>رقم الملف / المريض</label>
+                    <input id="patientNumber" type="text">
+                </div>
+
+                <div class="field">
+                    <label>العمر</label>
+                    <input id="age" type="number" min="0">
+                </div>
+
+                <div class="field">
+                    <label>النوع</label>
+                    <select id="gender">
+                        <option value="">اختر</option>
+                        <option>ذكر</option>
+                        <option>أنثى</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>التاريخ</label>
+                    <input id="date" type="date">
+                </div>
+
+                <div class="field">
+                    <label>التشخيص</label>
+                    <input id="diagnosis" type="text">
+                </div>
+
+                <div class="field">
+                    <label>رقم الهاتف</label>
+                    <input id="phone" type="tel">
+                </div>
+
+                <div class="field">
+                    <label>حالة المريض</label>
+                    <select id="status">
+                        <option>جديد</option>
+                        <option>متابعة</option>
+                        <option>تحسن</option>
+                        <option>تم الخروج</option>
+                    </select>
+                </div>
+
+                <div class="field full">
+                    <label>الملاحظات الطبية</label>
+                    <textarea id="notes"></textarea>
+                </div>
+
+                <div class="field full">
+                    <label>📁 إرفاق ملفات / صور / أشعة للمريض (يمكن الإضافة في أي وقت)</label>
+
+                    <label class="file-box" for="fileInput">
+                        اضغط هنا لاختيار الملفات المرفقة
+                        <br>
+                        (يمكنك اختيار عدة صور أو ملفات PDF)
+                    </label>
+
+                    <input id="fileInput" type="file" multiple accept="image/*,.pdf,.doc,.docx">
+
+                    <div id="fileList" class="file-list"></div>
+                </div>
+
+            </div>
+
+            <div class="buttons">
+                <button class="btn-add" type="submit" id="saveBtn">
+                    💾 حفظ المريض والملفات
+                </button>
+
+                <button class="btn-clear" type="button" onclick="clearForm()">
+                    🧹 إلغاء / مسح
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- جدول المرضى -->
+    <div class="card">
+
+        <h2>📋 سجل المرضى وملفاتهم الطبية</h2>
+
+        <input id="search" class="search" type="text" placeholder="🔎 ابحث باسم المريض أو الرقم أو التشخيص...">
+
+        <div class="buttons">
+            <button class="btn-export" onclick="exportCSV()">
+                📊 تصدير البيانات CSV
+            </button>
+
+            <button class="btn-delete" onclick="deleteAll()">
+                🗑️ حذف كافة السجلات
+            </button>
+        </div>
+
+        <br>
+
+        <div class="table-container">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>اسم المريض</th>
+                        <th>رقم المريض</th>
+                        <th>العمر</th>
+                        <th>النوع</th>
+                        <th>التاريخ</th>
+                        <th>التشخيص</th>
+                        <th>الهاتف</th>
+                        <th>الحالة</th>
+                        <th>ملفات المريض (معاينة الطبيب)</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+
+                <tbody id="patientsTable">
+                    <!-- سيتم عرض البيانات هنا -->
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
+let editingId = null;
+let currentFiles = []; // يحتوي على الملفات المحفوظة مسبقاً والجديدة
+
+// ضبط تاريخ اليوم تلقائياً
+document.getElementById("date").value = new Date().toISOString().split("T")[0];
+
+// عند اختيار ملفات جديدة
+document.getElementById("fileInput").addEventListener("change", function(){
+    const newSelected = Array.from(this.files);
+    
+    // تحويل الملفات لبيانات قابلة للعرض والفتح
+    const promises = newSelected.map(file => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                resolve({
+                    name: file.name,
+                    url: e.target.result
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    Promise.all(promises).then(uploadedFiles => {
+        currentFiles = currentFiles.concat(uploadedFiles);
+        showFiles();
+        document.getElementById("fileInput").value = "";
+    });
+});
+
+function showFiles(){
+    const list = document.getElementById("fileList");
+    list.innerHTML = "";
+
+    currentFiles.forEach((file, index) => {
+        const div = document.createElement("div");
+        div.className = "file-item";
+        div.innerHTML = `
+            <span>📎 ${escapeHTML(file.name)}</span>
+            <div>
+                <a href="${file.url}" target="_blank" class="file-link" style="margin-left:8px;">👁️ معاينة</a>
+                <button type="button" class="btn-delete" style="padding:4px 8px; font-size:12px;" onclick="removeFile(${index})">حذف</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function removeFile(index){
+    currentFiles.splice(index, 1);
+    showFiles();
+}
+
+// حفظ أو تعديل مريض
+document.getElementById("patientForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const patient = {
+        id: editingId || Date.now(),
+        name: document.getElementById("name").value,
+        patientNumber: document.getElementById("patientNumber").value,
+        age: document.getElementById("age").value,
+        gender: document.getElementById("gender").value,
+        date: document.getElementById("date").value,
+        diagnosis: document.getElementById("diagnosis").value,
+        phone: document.getElementById("phone").value,
+        status: document.getElementById("status").value,
+        notes: document.getElementById("notes").value,
+        files: currentFiles
+    };
+
+    if(editingId){
+        const index = patients.findIndex(p => p.id === editingId);
+        patients[index] = patient;
+        editingId = null;
+    } else {
+        patients.push(patient);
+    }
+
+    saveData();
+    clearForm();
+    renderPatients();
+    alert("تم حفظ بيانات المريض والملفات بنجاح ✅");
+});
+
+// عرض قائمة المرضى بالجدول
+function renderPatients(){
+    const table = document.getElementById("patientsTable");
+    const search = document.getElementById("search").value.toLowerCase();
+
+    table.innerHTML = "";
+
+    const filtered = patients.filter(p =>
+        (p.name && p.name.toLowerCase().includes(search)) ||
+        (p.patientNumber && p.patientNumber.toLowerCase().includes(search)) ||
+        (p.diagnosis && p.diagnosis.toLowerCase().includes(search))
+    );
+
+    if(filtered.length === 0){
+        table.innerHTML = `
+            <tr>
+                <td colspan="11" class="empty">لا توجد بيانات مرضى مضافة</td>
+            </tr>
+        `;
+        updateStats();
+        return;
+    }
+
+    filtered.forEach((p, index) => {
+        const tr = document.createElement("tr");
+
+        // تحضير روابط الملفات للدكتور
+        let filesCellHTML = "-";
+        if(p.files && p.files.length > 0){
+            filesCellHTML = p.files.map(f => {
+                if(typeof f === 'object' && f.url){
+                    return `<a href="${f.url}" target="_blank" class="file-link">📂 ${escapeHTML(f.name)}</a>`;
+                }
+                return `📎 ${escapeHTML(typeof f === 'string' ? f : f.name)}`;
+            }).join("<br>");
+        }
+
+        tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${escapeHTML(p.name)}</strong></td>
+            <td>${escapeHTML(p.patientNumber || "-")}</td>
+            <td>${p.age || "-"}</td>
+            <td>${p.gender || "-"}</td>
+            <td>${p.date || "-"}</td>
+            <td>${escapeHTML(p.diagnosis || "-")}</td>
+            <td>${escapeHTML(p.phone || "-")}</td>
+            <td>${p.status || "-"}</td>
+            <td>${filesCellHTML}</td>
+            <td>
+                <button class="btn-edit" onclick="editPatient(${p.id})">تعديل / إضافة ملفات</button>
+                <button class="btn-delete" onclick="deletePatient(${p.id})">حذف</button>
+            </td>
+        `;
+
+        table.appendChild(tr);
+    });
+
+    updateStats();
+}
+
+// تعديل المريض وإضافة ملفات إضافية له في أي وقت
+function editPatient(id){
+    const p = patients.find(patient => patient.id === id);
+    if(!p) return;
+
+    editingId = id;
+
+    document.getElementById("formTitle").textContent = "✏️ تعديل بيانات مريض وإضافة ملفات";
+    document.getElementById("name").value = p.name || "";
+    document.getElementById("patientNumber").value = p.patientNumber || "";
+    document.getElementById("age").value = p.age || "";
+    document.getElementById("gender").value = p.gender || "";
+    document.getElementById("date").value = p.date || "";
+    document.getElementById("diagnosis").value = p.diagnosis || "";
+    document.getElementById("phone").value = p.phone || "";
+    document.getElementById("status").value = p.status || "";
+    document.getElementById("notes").value = p.notes || "";
+
+    // تحميل ملفات المريض السابقة لإمكانية إضافة ملفات جديدة عليها
+    currentFiles = p.files ? [...p.files] : [];
+    showFiles();
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// حذف مريض
+function deletePatient(id){
+    if(!confirm("هل أنت متأكد من حذف هذا المريض وكافة ملفاته؟")) return;
+
+    patients = patients.filter(p => p.id !== id);
+    saveData();
+    renderPatients();
+}
+
+// حذف الكل
+function deleteAll(){
+    if(patients.length === 0) return;
+    if(!confirm("تحذير: سيتم حذف كافة السجلات والملفات المرفقة نهائياً! هل أنت متأكد؟")) return;
+
+    patients = [];
+    saveData();
+    renderPatients();
+}
+
+// مسح النموذج
+function clearForm(){
+    document.getElementById("patientForm").reset();
+    document.getElementById("formTitle").textContent = "➕ إضافة مريض جديد";
+    document.getElementById("date").value = new Date().toISOString().split("T")[0];
+    currentFiles = [];
+    editingId = null;
+    showFiles();
+}
+
+// حفظ في localStorage
+function saveData(){
+    localStorage.setItem("patients", JSON.stringify(patients));
+}
+
+// البحث
+document.getElementById("search").addEventListener("input", renderPatients);
+
+// تحديث الإحصائيات
+function updateStats(){
+    document.getElementById("totalPatients").textContent = patients.length;
+
+    const today = new Date().toISOString().split("T")[0];
+    const todayCount = patients.filter(p => p.date === today).length;
+    document.getElementById("todayPatients").textContent = todayCount;
+
+    const filesCount = patients.reduce((total, p) => total + (p.files ? p.files.length : 0), 0);
+    document.getElementById("totalFiles").textContent = filesCount;
+}
+
+// تصدير CSV
+function exportCSV(){
+    if(patients.length === 0){
+        alert("لا توجد بيانات للتصدير");
+        return;
+    }
+
+    let csv = "\uFEFFاسم المريض,الرقم,العمر,النوع,التاريخ,التشخيص,الهاتف,الحالة,الملاحظات,عدد الملفات\n";
+
+    patients.forEach(p => {
+        csv += [
+            p.name,
+            p.patientNumber,
+            p.age,
+            p.gender,
+            p.date,
+            p.diagnosis,
+            p.phone,
+            p.status,
+            p.notes,
+            p.files ? p.files.length : 0
+        ].map(value => `"${String(value || "").replace(/"/g, '""')}"`).join(",") + "\n";
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "سجل_المرضى.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// حماية النصوص
+function escapeHTML(text){
+    return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// تشغيل البرنامج عند الفتح
+renderPatients();
+</script>
+
+</body>
+</html>
